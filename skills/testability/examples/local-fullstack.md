@@ -1,10 +1,9 @@
-# 示例：全部本地全栈开发
+# 示例策略提案：全栈 Web 应用（本地开发）
 
-## 维度组合
+## 维度快照
 
 | 维度 | 值 |
 |------|-----|
-| 需求 | 测试用户注册和登录流程 |
 | 代码仓库 | Next.js 全栈应用（TypeScript + Prisma + PostgreSQL） |
 | 服务端 | 本地可运行（`npm run dev`） |
 | 数据库 | 本地 Docker PostgreSQL，可清空 |
@@ -13,18 +12,49 @@
 | 认证 | 可以自注册（项目有完整注册流程） |
 | 数据策略 | 可以清空重建（`prisma migrate reset`） |
 
-## 生成的测试方案要点
+## 测试理念
 
-- 启动方式：`docker compose up -d db && npm run dev`
-- 浏览器验证：Playwright 打开 `http://localhost:3000/register`，填写表单注册
-- DB 验证：`psql -h localhost -U postgres -d mydb -c "SELECT * FROM users WHERE email='test@test.com'"`
-- API 验证：`curl http://localhost:3000/api/auth/session`
-- 数据准备：`npx prisma migrate reset --force` 清空后 `npx prisma db seed` 填充基础数据
-- 认证：通过浏览器自动注册获取登录态
+### 整体策略
 
-## 环境前置条件
+这是一个典型的全栈本地开发场景，所有组件都在本地，数据库完全可控。我们采用**浏览器驱动的端到端集成测试**策略——从用户视角通过浏览器操作，同时用 DB 作为独立验证通道确认数据状态。
 
-- [ ] Docker 运行中，PostgreSQL 容器启动
-- [ ] `npm run dev` 服务正常启动在 3000 端口
-- [ ] 浏览器可访问 http://localhost:3000
-- [ ] psql 可连接本地数据库
+因为数据库可以清空重建，我们可以在每次测试前从零开始，确保测试的确定性和可重复性。
+
+### 验证通道与组合
+
+| 通道 | 工具 | 角色 |
+|------|------|------|
+| 浏览器 | Playwright | 主驱动——模拟用户操作，触发业务流程 |
+| DB CLI | psql | 独立验证——确认数据库状态变化 |
+| API | curl | 辅助验证——直接测试 API 端点 |
+
+### 集成测试分层
+
+```
+第 1 层：认证
+  └─ 浏览器自动注册 → 登录 → DB 确认用户记录存在
+
+第 2 层：核心 CRUD
+  └─ 浏览器创建/编辑/删除数据 → DB 确认记录变化
+
+第 3 层：完整业务流程
+  └─ 从注册到完成核心业务操作的全��路
+```
+
+## 数据流闭环
+
+| 问题 | 方案 |
+|------|------|
+| 数据从哪来？ | DB seed 脚本 + 浏览器自动注册创建 |
+| 数据怎么送入？ | `prisma migrate reset && prisma db seed` |
+| 怎么验证？ | 浏览器看 UI + psql 查 DB（独立通道） |
+| 怎么清理？ | 每次测试前 `prisma migrate reset`（完全重置） |
+
+### 示例：用户注册流程
+
+```
+准备 → prisma migrate reset 清空 DB，seed 基础数据
+执行 → Playwright 打开 /register，填写表单，提交
+验证 → psql 查 users 表确认新用户存在 + 浏览器确认跳转到 dashboard
+清理 → 下次测试前 reset（不需要单独清理）
+```

@@ -1,32 +1,71 @@
-# 示例：前端本地 + 远程 API
+# 示例策略提案：前端应用 + 远程 API
 
-## 维度组合
+## 维度快照
 
 | 维度 | 值 |
 |------|-----|
-| 需求 | 测试商品搜索和筛选功能 |
 | 代码仓库 | React SPA（TypeScript + Vite） |
 | 服务端 | 远程 dev 环境 API（https://api-dev.example.com） |
 | 数据库 | 无访问权限（API 团队管理） |
 | 前端 | 本地开发可运行，proxy 连远程 API |
-| 验证通道 | 浏览器 + API（通过远程 dev 环境） |
+| 验证通道 | 浏览器 + API |
 | 认证 | Cookie 导入（公司 SSO 登录太复杂） |
-| 数据策略 | 只能用现有数据（无 DB 访问） |
+| 数据策略 | 只能用现有数据 + 通过 UI/API 创建 |
 
-## 生成的测试方案要点
+## 测试理念
 
-- 启动方式：`npm run dev`（Vite proxy 自动转发 API 请求到远程）
-- 浏览器验证：Playwright 打开 `http://localhost:5173/products`，搜索关键词，验证结果列表
-- API 验证：`curl https://api-dev.example.com/api/products?q=keyword -H "Cookie: <auth_cookie>"`
-- 数据准备：使用远程 dev 环境中已有的商品数据
-- 认证：
-  1. 用户在浏览器中手动登录 SSO
-  2. 导出 cookie（`document.cookie` 或浏览器开发工具）
-  3. 导入到 Playwright 的 storage state
+### 整体策略
 
-## 环境前置条件
+纯前端场景：后端 API 是别人开发的，你无法直接访问数据库。核心验证手段就是**浏览器**，辅以 API 调用做交叉验证��
 
-- [ ] 远程 dev API 可达：`curl -s -o /dev/null -w "%{http_code}" https://api-dev.example.com/health`
-- [ ] 前端 dev server 启动：`curl -s -o /dev/null -w "%{http_code}" http://localhost:5173`
-- [ ] 认证 cookie 有效：`curl -H "Cookie: <cookie>" https://api-dev.example.com/api/me`
-- [ ] API proxy 配置正确：在前端页面中调用 API 能正常返回数据
+由于 SSO 登录流程太复杂无法自动化，我们采用 **cookie 注入**方式获取登录态：用户在浏览器中手动登录一次，导出认证状态文件，后续测试自动注入。
+
+测试重点是前端交互逻辑和 UI 渲染，不需要验证后端 API 的正确性（那是 API 团队的事）。
+
+### 验证通道与组合
+
+| 通道 | 工具 | 角色 |
+|------|------|------|
+| 浏览器 | Playwright | 主驱动 + 主验证——模拟用户操作，检查 UI 状态 |
+| API | curl / fetch | 辅助验证——确认 API 返回的数据与 UI 显示一致 |
+
+### 集成测试分层
+
+```
+第 1 层：认证
+  └─ 注入 cookie → 刷新页面 → 确认已登录状态
+  └─ 验证：页面显示用户信息，不重定向到登录页
+
+第 2 层：页面渲染和数据展示
+  └─ 访问各功能页面 → 检查数据是否正确加载
+  └─ 验证：关键 UI 元素存在 + 数据与 API 返回一致
+
+第 3 层：交互操作
+  └─ 搜索、筛选、表单提交、分页等
+  └─ 验证：操作后 UI 更新正确 + API 请求参数正确
+```
+
+## 数据流闭环
+
+| 问题 | 方案 |
+|------|------|
+| 数据从哪来？ | 远程 dev 环境已有数据（无法控制） |
+| 数据怎么送入？ | 不需要——使用 dev 环境现有数据 |
+| 怎么验证？ | 浏览器 UI 检查 + API 响应交叉验证 |
+| 怎么清理��� | 不需要（或通过 UI 删除测试中创建的数据） |
+
+### 已知局限
+
+- 测试数据不可控——dev 环境数据可能被他人修改
+- 无独立验证通道——只能通过 UI 和 API（API 本身未必可靠）
+- 认证状态有有效期——cookie 过期后需要用户重新手动登录
+
+### 示例：商品搜索功能
+
+```
+准备 → 注入 cookie 文件，确认登录态有效
+执行 → Playwright 打开 /products，输入搜索关键词，点击搜索
+验证 → UI：搜索结果列表不为空，包含关键词相关商品
+     → API：GET /api/products?q=keyword 返回的数据与页面显示一致
+清理 → 无需清理（搜索是只读操作）
+```
