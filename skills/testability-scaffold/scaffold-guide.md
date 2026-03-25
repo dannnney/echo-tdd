@@ -115,6 +115,8 @@ createAPIClient(baseURL, auth) → client
 - 清理函数应该是幂等的（重复调用不报错）
 - 清理失败不应阻塞测试流程（打 warning 但不 throw）
 - 注册为测试框架的 afterAll/teardown 钩子
+- 清理方式取决于实际 API 能力——不一定是物理删除，也可能是软删除、归档、移入回收站等
+- 环境特定的配置值（如空间 ID、目录 token）**不应有硬编码 fallback**，缺失时应 throw 明确错误提示用户配置 `.env.test`
 
 #### 模块 5：Smoke Test
 
@@ -162,7 +164,7 @@ API_BASE_URL=http://localhost:3000
 - 提供有意义的占位值（不是空字符串）
 - 敏感值用 `your_xxx_here` 提示用户填写
 - 本地开发的默认值可以直接填写（如 `localhost:5432`）
-- 加入 `.gitignore`
+- 生成 `.env.test` 后**必须检查 `.gitignore` 是否包含它**，如果没有则自动添加
 
 ### 环境变量加载
 
