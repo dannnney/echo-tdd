@@ -147,11 +147,24 @@
 
 #### I. 界面观测
 
+**浏览器平台**（对 WebUI/前端项目，浏览器是一个多维度的观测平台，不仅仅是"点击触发器"）：
+
+| 子通道 | 工具 | 作为触发 | 作为观测 | 推断线索 |
+|--------|------|---------|---------|----------|
+| DOM 状态 | Playwright locator / querySelector | 点击、填写表单、导航 | 元素存在性、文本内容、CSS 类、属性值、可见性 | 有前端代码 |
+| 浏览器 Console | Playwright console 事件监听 | — | JS 错误、警告、应用日志输出 | 有前端代码 |
+| 浏览器 Network | Playwright route / request/response 事件 | — | HTTP/WS 请求响应、状态码、载荷内容、请求时序 | 有前端代码 |
+| 视觉状态 | Playwright screenshot / toHaveScreenshot | — | 截图比对、像素级 diff、视觉回归检测 | 有前端代码 |
+| 存储状态 | Playwright evaluate (localStorage/cookie) | 写入测试状态 | 读取 localStorage、sessionStorage、cookie 值 | 有前端代码 |
+| URL/路由 | Playwright page.url() / waitForURL | 导航到指定路径 | 当前路径、查询参数、hash 变化 | 有前端路由 |
+
+> **注意**：对 WebUI/SPA/前端项目，浏览器既是主要的触发通道，**也是主要的观测通道**。不要把浏览器仅当作触发器——DOM 状态、Console 错误、Network 请求、视觉渲染都是关键的观测维度。后端 API/DB 是辅助的独立验证通道。
+
+**其他界面平台**：
+
 | 通道 | 工具 | 作为触发 | 作为观测 | 推断线索 |
 |------|------|---------|---------|----------|
-| 浏览器页面 | Playwright / Puppeteer | 点击、填写表单、导航 | 检查 DOM 状态、UI 渲染结果 | 有前端代码 |
 | APP/客户端界面 | mac-use / ADB / Appium | 操作移动端/桌面端 UI | 检查界面状态、元素存在性 | 移动端/桌面端项目 |
-| 浏览器 DevTools | Console / Network tab | — | 检查 Console 日志、Network 请求/响应 | 有前端代码 |
 
 #### II. 数据观测
 
