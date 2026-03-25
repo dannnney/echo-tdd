@@ -264,36 +264,115 @@ console.log('SDK 功能验证通过:', result.code === 0 ? 'OK' : 'FAIL');
 
 ## 7. 浏览器可达性
 
-### URL 可访问
+> **重要**：curl 只能验证 URL 网络层可达，不能证明浏览器自动化可用。
+> 如果浏览器是观测通道，**必须实际启动浏览器并完成页面导航验证**，仅 curl 检查不算通过。
 
-```bash
-# HTTP 可达
-curl -s -o /dev/null -w "%{http_code}" <url>
-# 成功标准：200
+---
 
-# 检查是否重定向到登录页
-curl -s -o /dev/null -w "%{redirect_url}" <url>
-# 如果重定向到 /login → 需要认证
-```
+### 第一步：确认使用哪种浏览器自动化工具
 
-### Playwright 可用性
+浏览器探测前，先检查项目仓库中是否已有自动化方案：
 
-```bash
-# Playwright 已安装
-npx playwright --version 2>/dev/null
+| 情况 | 处理策略 |
+|------|---------|
+| 仓库已有 Puppeteer / Cypress / Selenium 等 | 优先沿用已有方案，确保探测基于它执行；如无法运行则与用户确认，再考虑切换到 Playwright |
+| 仓库已有旧版 Playwright | 沿用现有版本和配置 |
+| 用户不清楚或仓库无任何浏览器自动化 | 使用 Playwright |
+| 全新项目 | 使用 Playwright |
 
-# 浏览器已下载
-npx playwright install --dry-run 2>/dev/null
-# 或检查浏览器二进制文件是否存在
-```
+**原则**：尊重项目现有投入，不随意引入新工具；实在跑不起来才与用户协商切换。
 
-### 本地服务启动检查
+---
 
-```bash
-# 如果服务未运行，检查启动命令是否存在
-grep -q '"dev"' package.json && echo "有 dev 脚本" || echo "无 dev 脚本"
-grep -q '"start"' package.json && echo "有 start 脚本" || echo "无 start 脚本"
-```
+### 第二步：URL 网络层可达
+
+用 `curl` 确认目标 URL 是否可访问、是否会重定向到登录页。
+
+- 成功标准：返回非 000 的状态码（000 = 服务未启动或网络不通）
+- 若落地 URL 含 `/login`、`/signin` → 标记需要处理登录态，影响后续探测和脚手架认证设计
+
+服务未启动时：检查项目的 `package.json` 是否有 `dev`/`start` 脚本，询问用户是否先启动服务。
+
+---
+
+### 第三步：自动化工具安装与浏览器二进制检查
+
+确认所选工具（Playwright 或项目已有工具）已安装、浏览器二进制已下载。
+
+- Playwright：检查 `npx playwright --version` 和浏览器二进制是否存在（`playwright install --dry-run`）
+- 浏览器二进制缺失是阻塞性问题，必须先修复（`npx playwright install chromium`）才能进行下一步
+- 工具包未安装但后续需要 → 记录 WARN，在脚手架生成时安装，不阻塞继续探测
+
+---
+
+### 第四步：实际启动浏览器验证 ⚠️ 必须执行
+
+**仅完成前三步不算浏览器通道通过。** 必须实际启动浏览器、导航到目标页面、验证 DOM 可操作。
+
+根据场景选择以下两种验证模式之一（或两种都做）：
+
+#### 模式 A：Playwright 自动化脚本（测试执行模式）
+
+适用场景：验证自动化脚本可以无人值守地运行，是测试用例的执行基础。
+
+验证要点：
+- Chromium 能以 headless 模式启动
+- 导航到目标 URL，页面加载到 `domcontentloaded`
+- 能读取页面 title、URL、body 文本片段（证明 DOM 可操作）
+- 登录态处理：若页面需要认证，验证以下方式能正常导入登录态：
+  - **storage state 文件（auth.json）**：Playwright 的 `storageState` 机制，可导入 cookies + localStorage，是推荐方式
+  - **用户数据目录（--profile）**：复用浏览器已有的 profile，适合本地调试场景
+  - 探测时需确认上述至少一种方式可用，并记录选用的方式供脚手架生成参考
+
+成功标准：浏览器启动、页面可导航、DOM 可操作、登录态可导入。
+
+#### 模式 B：playwright-cli 驱动（Agent 自由探索模式）
+
+适用场景：由 Agent 驱动浏览器进行自由浏览和探索，用于理解页面结构、验证交互流程、探测认证状态。
+
+> **重要区分**：这里指的是 `@playwright/cli` 这个**独立包**（`npm install -g @playwright/cli@latest`），不是 `playwright` 包内置的 `playwright open`/`playwright codegen` 命令，也不是 playwright-mcp。两者命令体系完全不同。
+
+`playwright-cli` 专为 coding agent 设计。Agent 通过离散的 CLI 指令操作浏览器：`open` → `snapshot`（获取 element ref）→ `click/fill/press` 等，每步都返回当前页面状态反馈，token 消耗远低于 MCP。
+
+验证要点：
+- `playwright-cli --version` 可执行（确认包已全局安装）
+- `playwright-cli open <url>` 能启动浏览器并导航
+- `playwright-cli snapshot` 能返回页面结构快照和 element ref（证明 Agent 可操作元素）
+- 登录态导入：
+  - `playwright-cli state-load <auth.json>` 能加载已保存的 storage state
+  - 或 `playwright-cli open <url> --persistent` 使用持久化 profile，跨会话保留登录态
+  - 可通过 `PLAYWRIGHT_CLI_SESSION=<name>` 环境变量隔离不同项目的 session
+
+可选增强：`playwright-cli install --skills` 安装 SKILLs 文件，让 Agent 获得更丰富的操作指引。
+
+成功标准：`playwright-cli` 可执行，页面可导航，`snapshot` 返回有效内容，登录态可加载。
+
+---
+
+### 登录态持久化策略
+
+如果目标页面需要登录，必须在探测阶段确认登录态的获取和持久化方式，否则后续所有测试都会被登录页面阻断。
+
+| 方式 | 适用工具 | 适用场景 | 探测验证点 |
+|------|---------|---------|-----------|
+| storage state 文件（auth.json）| 模式 A（Playwright 脚本）| 推荐。自动化测试首选，可在 CI 中使用 | 确认文件存在且能被 `storageState` 加载；验证加载后页面不再跳转登录页 |
+| `playwright-cli state-load <file>` | 模式 B（playwright-cli）| Agent 驱动场景，加载已有登录态 | 执行 `state-load` 后 `goto` 页面，验证不再重定向登录页 |
+| `--persistent` / `--profile=<path>` | 两种模式均可 | 本地开发调试，复用已登录的浏览器 profile | 确认 profile 目录存在，带此参数启动后页面已登录 |
+| 自动登录脚本 | 模式 A | 凭证已知（用户名+密码），可自动填表后导出 state | 验证凭证配置正确，脚本能执行登录流程并导出 auth.json |
+| 手动获取 + 导入 | 两种模式均可 | OAuth/SSO 等无法自动化的登录 | 引导用户手动登录后导出 auth.json / state 文件，验证导入后可用 |
+
+**探测结论必须明确说明**：使用哪种登录态方式、用哪个工具加载、文件路径或 profile 目录在哪，供脚手架生成直接使用。
+
+---
+
+### 探测结果判定
+
+| 状态 | 条件 | 后续处理 |
+|------|------|---------|
+| ✅ PASS | 浏览器启动、页面可导航、DOM 可操作、登录态可导入 | 浏览器通道确认可用，记录工具版本和 auth 方式 |
+| ⚠️ WARN | 页面需要登录但 auth 方式未确认 | 先确认登录态方案再继续 |
+| ❌ FAIL（可修复）| 浏览器二进制未下载 / 服务未启动 / auth 文件缺失 | 给出具体修复步骤，修复后重跑此步骤 |
+| ❌ FAIL（阻塞）| 项目已有自动化工具无法运行 | 与用户确认：修复现有工具，或切换到 Playwright |
 
 ---
 
@@ -385,7 +464,7 @@ python3 -c "import pyautogui; print('PyAutoGUI OK')" 2>/dev/null
 
 | 通道 | 原因 | 处理方式 |
 |------|------|---------|
-| 浏览器 DevTools (Console/Network) | 运行时调试工具，非外部可探测 | 只要浏览器可达（第 7 节），DevTools 即可用。无需单独探测 |
+| 浏览器 DevTools (Console/Network) | 运行时调试工具，非外部可探测 | 第 7 节步骤 3 的 Playwright 实际启动探测通过后，DevTools 即可用。无需单独探测 |
 | 进程流式输出 (stdout/stderr) | 依赖服务是否在运行中 | 在服务启动后自动可用。标注为"依赖服务启动" |
 | 日志系统 (ELK/CloudWatch) | 远程服务，探测方式各异 | 向用户确认是否有日志系统访问权限和 URL |
 | OAuth/SSO 认证 | 需要人工交互 | 引导用户手动获取 cookie/token |

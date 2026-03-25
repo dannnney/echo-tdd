@@ -115,6 +115,9 @@ digraph scaffold {
   └─ DB 连通性（如策略需要 DB 验证）
   └─ API 可达性（如策略需要 API 验证）
   └─ 浏览器可达性（如策略需要 UI 验证）
+  │   ⚠️  必须实际启动 Playwright 导航到目标页面，验证 headless 浏览器
+  │       可启动、页面可加载、DOM 可操作。仅 curl 检查 URL 可达不算通过。
+  │       详见 probe-patterns.md § 7 步骤 3。
   └─ 文件系统权限（如策略需要文件验证）
 
 第 5 层：组合通道可用性
