@@ -1,0 +1,6 @@
+{
+  "name": "echo-tdd",
+  "description": "Observability-driven testing workflow with Echo-TDD plan, verify, and generate skills",
+  "version": "1.0.0",
+  "contextFileName": "GEMINI.md"
+}

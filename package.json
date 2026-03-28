@@ -1,0 +1,6 @@
+{
+  "name": "echo-tdd",
+  "version": "1.0.0",
+  "type": "module",
+  "main": ".opencode/plugins/echo-tdd.js"
+}

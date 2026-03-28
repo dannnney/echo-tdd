@@ -1,0 +1,20 @@
+{
+  "name": "echo-tdd-marketplace",
+  "interface": {
+    "displayName": "Echo-TDD Plugins"
+  },
+  "plugins": [
+    {
+      "name": "echo-tdd",
+      "source": {
+        "source": "local",
+        "path": "./plugins/echo-tdd"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

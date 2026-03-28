@@ -1,0 +1,27 @@
+{
+  "name": "echo-tdd",
+  "version": "1.0.0",
+  "description": "Observability-driven testing workflow with Echo-TDD plan, verify, and generate skills",
+  "author": {
+    "name": "dannnney",
+    "email": "dannnney@gmail.com"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Echo-TDD",
+    "shortDescription": "Observability-driven testing skills",
+    "longDescription": "Install Echo-TDD plan, verify, and generate skills for Codex through a packaged plugin.",
+    "developerName": "dannnney",
+    "category": "Productivity",
+    "capabilities": [
+      "Interactive",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Create an Echo-TDD plan for this feature.",
+      "Verify whether my testing channels are executable.",
+      "Generate cases and data blueprints from my Echo-TDD plan."
+    ],
+    "brandColor": "#1F7A8C"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "name": "echo-tdd",
+  "displayName": "Echo-TDD",
+  "description": "Observability-driven testing workflow with Echo-TDD plan, verify, and generate commands",
+  "version": "1.0.0",
+  "author": {
+    "name": "dannnney",
+    "email": "dannnney@gmail.com"
+  },
+  "keywords": [
+    "skills",
+    "testing",
+    "observability",
+    "echo-tdd",
+    "workflow"
+  ],
+  "skills": "./skills/",
+  "commands": "./commands/"
+}
