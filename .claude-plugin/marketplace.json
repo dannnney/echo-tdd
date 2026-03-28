@@ -1,0 +1,20 @@
+{
+  "name": "echo-tdd-marketplace",
+  "description": "Marketplace for installing the Echo-TDD Claude Code plugin",
+  "owner": {
+    "name": "dannnney",
+    "email": "dannnney@gmail.com"
+  },
+  "plugins": [
+    {
+      "name": "echo-tdd",
+      "description": "Observability-driven testing workflow for Claude Code with Echo-TDD plan, verify, and generate commands",
+      "version": "1.0.0",
+      "source": "./",
+      "author": {
+        "name": "dannnney",
+        "email": "dannnney@gmail.com"
+      }
+    }
+  ]
+}
