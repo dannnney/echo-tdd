@@ -2,14 +2,6 @@
 description: "Generate Echo-TDD test cases and data blueprints from a plan and verification results"
 ---
 
-Use the `echo-tdd-generate` skill.
+Invoke the `echo-tdd-generate` skill using the Skill tool, then follow the skill's instructions exactly.
 
-This command should:
-
-- load the relevant Echo-TDD plan and verification report
-- adapt coverage to the channels that were actually confirmed
-- generate case documents and data blueprints without producing final test code
-
-Preferred artifact path: `docs/echo-tdd/<topic>/generate.md`
-
-Primary slash command: `/echo-tdd:generate`
+IMPORTANT: This is a multi-phase interactive workflow. You MUST NOT skip ahead to generating the output document. The skill defines phases that include loading plan and verification artifacts, adapting coverage to confirmed channels, and generating case documents with data blueprints. Follow every phase in order.

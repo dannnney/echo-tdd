@@ -1,6 +1,5 @@
 {
   "name": "echo-tdd-marketplace",
-  "description": "Marketplace for installing the Echo-TDD Claude Code plugin",
   "owner": {
     "name": "dannnney",
     "email": "dannnney@gmail.com"

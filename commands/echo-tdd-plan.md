@@ -2,14 +2,6 @@
 description: "Generate an Echo-TDD plan from requirements, docs, and repository context"
 ---
 
-Use the `echo-tdd-plan` skill.
+Invoke the `echo-tdd-plan` skill using the Skill tool, then follow the skill's instructions exactly.
 
-This command should:
-
-- understand the requested feature, workflow, or requirement
-- inspect the repository to infer trigger and observation channels
-- produce an Echo-TDD plan artifact
-
-Preferred artifact path: `docs/echo-tdd/<topic>/plan.md`
-
-Primary slash command: `/echo-tdd:plan`
+IMPORTANT: This is a multi-phase interactive workflow. You MUST NOT skip ahead to generating the output document. The skill defines 6 phases (Phase 0 through Phase 5) that include codebase scanning, user discussion, dimension completion, and explicit user confirmation before generating the final plan. Follow every phase in order.
