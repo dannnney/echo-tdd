@@ -72,17 +72,41 @@ digraph scaffold {
 
 ## Phase 0: 方案解析
 
-读取用户提供的阶段一可观测性方案，提取以下关键信息：
+读取用户提供的可观测性方案，支持新旧两种路径格式。
+
+### 路径格式支持
+
+**新格式（优先，阶段一 v1.1+ 生成）**：
+- 主文档：`docs/echo-tdd/plans/YYYY-MM-DD-<topic>-plan.md`
+- Checklist：`docs/echo-tdd/plans/YYYY-MM-DD-<topic>-checklist.md`
+- 可观测性详情（按需）：`docs/echo-tdd/plans/YYYY-MM-DD-<topic>-observability.md`
+
+**旧格式（兼容，阶段一 v1.0 生成）**：
+- 主文档：`docs/echo-tdd/<topic>/plan.md`
+- checklist 和可观测性详情在主文档内
+
+**读取策略**：
+1. 如果用户提供了完整路径参数（如 `/echo-tdd:verify @docs/echo-tdd/plans/2026-04-05-fz-feishu-sync-plan.md`），按参数读取
+2. 如果用户只提供了 topic，先尝试新格式（按日期倒序查找最新）
+3. 如果新格式不存在，尝试旧格式 `docs/echo-tdd/<topic>/plan.md`
+4. 都不存在，提示用户提供正确路径
 
 ### 必须提取的内容
 
-| 来源 | 提取什么 | 用途 |
-|------|---------|------|
-| 第 2 节 环境画像 | 技术栈、基础设施详情 | 决定脚手架语言/框架、探测目标 |
-| 第 3 节 可观测性方案 | 基础通道、组合通道、触发×观测组合 | 决定需要验证哪些通道 |
-| 第 4 节 数据流闭环 | 数据来源、送入方式、验证方式、清理方式 | 决定数据工厂和清理 helper 的设计 |
-| 第 5 节 认证方案 | 认证方式、需要用户提供的信息 | 决定认证 helper 的设计 |
-| 第 6 节 环境前置条件 | checklist + 验证命令 | **直接作为 Phase 1 的探测清单** |
+| 来源 | 新格式 | 旧格式 | 提取什么 | 用途 |
+|------|--------|--------|---------|------|
+| 需求来源 | plan.md 第 1 节 | plan.md 第 1 节（如有） | 原始需求文档位置 | 追溯需求，辅助脚手架设计 |
+| 环境画像 | plan.md 第 2 节 | plan.md 第 2 节 | 技术栈、基础设施详情 | 决定脚手架语言/框架、探测目标 |
+| 可观测性摘要 | plan.md 第 3 节 | plan.md 第 3 节 | 核心观测模式、通道角色 | 理解可观测性重心 |
+| 可观测性详情 | observability.md | plan.md 第 3 节 | 完整的触发×观测矩阵、约束 | 按需查看完整通道信息 |
+| 数据流闭环 | plan.md 第 4 节 | plan.md 第 4 节 | 数据来源、送入方式、验证方式、清理方式 | 决定数据工厂和清理 helper 的设计 |
+| 认证方案 | plan.md 第 6 节 | plan.md 第 6 节 | 认证方式、需要用户提供的信息 | 决定认证 helper 的设计 |
+| 环境前置条件 | checklist.md | plan.md 第 7 节 | checklist + 验证命令 | **直接作为 Phase 1 的探测清单** |
+
+**用户触发示例**：
+```
+/echo-tdd:verify @docs/echo-tdd/plans/2026-04-05-fz-feishu-sync-plan.md
+```
 
 ### 输出
 
@@ -265,8 +289,17 @@ digraph scaffold {
 Smoke test 通过后：
 1. 告知用户阶段二完成
 2. 总结已确认的环境能力和脚手架内容
-3. 将验证报告保存到 `docs/echo-tdd/<topic>/verify.md`
-4. 提示用户可以进入阶段三——运行 `/echo-tdd:generate @docs/echo-tdd/<topic>/verify.md` 生成测试用例文档和数据蓝图
+3. 将验证报告保存到 `docs/echo-tdd/verify/YYYY-MM-DD-<topic>-verify.md`
+   - 其中 `YYYY-MM-DD` 为验证当天日期
+   - `<topic>` 从输入的 plan 文档名称中提取
+4. 提示用户可以进入阶段三——运行 `/echo-tdd:generate @docs/echo-tdd/verify/YYYY-MM-DD-<topic>-verify.md` 生成测试用例文档和数据蓝图
+
+**示例**：
+```
+验证报告已保存：docs/echo-tdd/verify/2026-04-05-fz-feishu-sync-verify.md
+
+下一步：运行 `/echo-tdd:generate @docs/echo-tdd/verify/2026-04-05-fz-feishu-sync-verify.md` 进入阶段三
+```
 
 ---
 
