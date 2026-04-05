@@ -148,6 +148,28 @@ digraph echo_tdd_plan {
 
 无论哪种输入，都记录下来，作为后续扫描和提问的上下文。
 
+### topic 提取
+
+确定文件名中的 `<topic>` 部分，用于构造输出文件名 `YYYY-MM-DD-<topic>-plan.md`：
+
+**提取策略**：
+- 如果用户提供文档路径（如 `@docs/fz-feishu-sync-spec.md`），从文件名提取（`fz-feishu-sync`）
+- 如果用户用自然语言描述（如"测试用户注册流程"），提取关键词（`user-registration`）
+- 如果无明显 topic，根据代码库名称推断（如项目名）或提示用户输入
+
+**topic 规范化**：
+- 转为 kebab-case（`userRegistration` → `user-registration`）
+- 移除特殊字符（只保留字母、数字、连字符）
+- 限制长度 ≤ 40 字符
+- 全小写
+
+**记录变量**：将规范化后的 topic 记录为 `planTopic` 变量，供 Phase 5 生成文件名时使用。
+
+**示例**：
+- 输入：`@docs/fz-feishu-sync.md` → `planTopic = "fz-feishu-sync"`
+- 输入："测试飞书文档同步" → `planTopic = "feishu-doc-sync"`
+- 输入：无，项目名为 `my-app` → `planTopic = "my-app"`
+
 ---
 
 ## Phase 1: 代码库扫描（智能推断）
@@ -386,7 +408,7 @@ CLI 工具：
 
 ## Phase 5: 方案生成
 
-基于完整的六大维度信息和用户确认的可观测性思路，使用 `output-template.md` 中的模板生成完整的可观测性方案。
+基于完整的六大维度信息和用户确认的可观测性思路，分三次生成文档，避免单次输出过大导致超时。
 
 ### 输出定位
 
@@ -398,24 +420,102 @@ CLI 工具：
 
 用 1-2 个方向性示例说明观测思路即可，不要铺开完整的测试用例清单。
 
-### 输出要求
+### 目录和命名
 
-1. 方案保存为 markdown 文件，默认输出到 `docs/echo-tdd/<topic>/plan.md`
-2. **可观测性方案是文档的核心主体**——触发通道、观测通道、组合矩阵必须详尽
-3. 数据流闭环（准备→送入→验证→清理）必须说清楚
-4. 涉及金钱/时间流/外部副作用时，必须提出渐进式真实度方案
-5. 测试分层概要只写层次结构和观测模式，不写详细用例场景
-6. 环境前置条件 checklist 是给阶段二（环境探测验证）使用的
+输出文件保存在 `docs/echo-tdd/plans/` 目录下，使用时间戳 + topic 命名：
+
+- 主文档：`docs/echo-tdd/plans/YYYY-MM-DD-<topic>-plan.md`
+- 可观测性详情：`docs/echo-tdd/plans/YYYY-MM-DD-<topic>-observability.md`
+- 环境前置条件：`docs/echo-tdd/plans/YYYY-MM-DD-<topic>-checklist.md`
+
+其中：
+- `YYYY-MM-DD`：生成当天日期（如 `2026-04-05`）
+- `<topic>`：Phase 0 提取的 planTopic 变量（kebab-case 格式）
+
+**示例**：
+```
+docs/echo-tdd/plans/2026-04-05-fz-feishu-sync-plan.md
+docs/echo-tdd/plans/2026-04-05-fz-feishu-sync-observability.md
+docs/echo-tdd/plans/2026-04-05-fz-feishu-sync-checklist.md
+```
+
+### 生成策略
+
+分三次生成，每次控制在 6K tokens 以内，避免输出超时：
+
+#### 步骤 1：生成主文档
+
+使用 Write 工具创建 `YYYY-MM-DD-<topic>-plan.md`，参考 `output-template-plan.md`。
+
+**内容要求**：
+- 第 1 节"需求概述"增加"需求来源"小节（记录 Phase 0 的输入来源）
+- 第 2 节"环境画像"完整填充
+- 第 3 节"可观测性方案"为摘要版，包含：
+  - 整体策略（2-3 段话）
+  - 通道角色（列表形式）
+  - 关键功能模块组合（简化表格，3-5 行）
+  - 添加指向 `observability.md` 的相对路径链接
+- 第 4-6 节完整填充
+- 第 7 节"环境前置条件"为概览版，只展示 3-5 个最关键条件，添加指向 `checklist.md` 的链接
+- 第 8 节"后续阶段展望"完整填充
+
+**目标大小**：3-4K tokens
+
+**告知用户**：
+> 正在生成主文档 `docs/echo-tdd/plans/YYYY-MM-DD-<topic>-plan.md`...
+
+#### 步骤 2：生成可观测性详情
+
+使用 Write 工具创建 `YYYY-MM-DD-<topic>-observability.md`，参考 `output-template-observability.md`。
+
+**内容要求**：
+- 顶部元信息区添加返回主文档的相对路径链接
+- "整体可观测性策略"详细阐述（4-5 段话）
+- 完整的基础通道表（所有通道，包含说明列）
+- 如果是 WebUI 项目，必须展开浏览器子通道（DOM、Console、Network、Visual、Storage、URL）
+- 完整的组合通道表（如有）
+- 完整的触发×观测矩阵（所有功能模块，包含数据准备和清理列）
+- 详细的约束与局限说明
+- 如适用，完整的渐进式真实度表格
+
+**目标大小**：5-6K tokens
+
+**告知用户**：
+> 正在生成可观测性详情 `docs/echo-tdd/plans/YYYY-MM-DD-<topic>-observability.md`...
+
+#### 步骤 3：生成环境前置条件
+
+使用 Write 工具创建 `YYYY-MM-DD-<topic>-checklist.md`，参考 `output-template-checklist.md`。
+
+**内容要求**：
+- 顶部元信息区添加返回主文档的相对路径链接
+- 按 6 层依赖关系组织（基础运行环境 → 依赖安装 → 认证/凭证 → 基础通道可达性 → 组合通道可用性 → 数据操作权限）
+- 每项包含：验证命令、期望结果、说明
+- 底部添加统计汇总（总计和各层分布）
+
+**目标大小**：2-3K tokens
+
+**告知用户**：
+> 正在生成环境前置条件 `docs/echo-tdd/plans/YYYY-MM-DD-<topic>-checklist.md`...
 
 ### 最终确认
 
-生成完整方案后交由用户最终确认。此时方向已在 Phase 4 对齐，这次确认重点是**完整性和细节**——检查环境画像是否准确、观测通道是否详尽、数据流闭环是否清晰、环境前置条件 checklist 是否完整。如果有遗漏或细节需要调整，修改后直接保存。
+生成三个文档后，告知用户：
+
+> 可观测性方案已生成：
+> - 主文档：`docs/echo-tdd/plans/YYYY-MM-DD-<topic>-plan.md`
+> - 可观测性详情：`docs/echo-tdd/plans/YYYY-MM-DD-<topic>-observability.md`
+> - 环境前置条件：`docs/echo-tdd/plans/YYYY-MM-DD-<topic>-checklist.md`
+>
+> 请审阅主文档，如有需要可查看详情文档。确认无误后我们可以进入下一阶段。
+
+此时方向已在 Phase 4 对齐，这次确认重点是**完整性和细节**——检查环境画像是否准确、观测通道是否详尽、数据流闭环是否清晰、环境前置条件 checklist 是否完整。如果有遗漏或细节需要调整，修改后直接保存。
 
 ### 下一步引导
 
 方案审阅通过后，向用户提问下一步方向：
 
-- **环境确认 + 脚手架**（推荐）— 先验证环境、搭建测试基础设施，再生成具体用例。运行 `/echo-tdd:verify @docs/echo-tdd/<topic>/plan.md` 进入阶段二
+- **环境确认 + 脚手架**（推荐）— 先验证环境、搭建测试基础设施，再生成具体用例。运行 `/echo-tdd:verify @docs/echo-tdd/plans/YYYY-MM-DD-<topic>-plan.md` 进入阶段二
 - **先生成测试用例** — 先看到具体的测试用例，之后再验证环境
 
 默认推荐前者。阶段二会逐项验证环境前置条件，生成认证 helper、数据工厂、通道客户端等测试基础设施代码，并用 smoke test 证明一切就绪。
