@@ -1,39 +1,26 @@
 # Echo-TDD
 
-Echo-TDD is an observability-driven testing workflow centered around three core capabilities:
+Echo-TDD is an observability-driven testing workflow for Vibe Coding, providing three skills:
 
-- `/echo-tdd:plan`
-- `/echo-tdd:verify`
-- `/echo-tdd:generate`
-
-This repository now follows the same multi-platform packaging strategy as `superpowers`, with install surfaces for Claude Code, Codex, Cursor, Gemini CLI, and OpenCode.
+- `echo-tdd-plan` — generate an observability-driven test plan
+- `echo-tdd-verify` — verify that the plan is executable in the current environment
+- `echo-tdd-generate` — generate test cases and data blueprints
 
 ## Installation
 
 ### Claude Code
 
-Register the marketplace:
-
 ```bash
-/plugin marketplace add dannnney/testability
+claude plugin marketplace add dannnney/echo-tdd
+claude plugin install echo-tdd@echo-tdd-marketplace
 ```
-
-Then install:
-
-```bash
-/plugin install echo-tdd@echo-tdd-marketplace
-```
-
-### Cursor
-
-This repository includes a root `.cursor-plugin/plugin.json` manifest. Publish it through your preferred Cursor plugin distribution path, or install it through Cursor's plugin workflow once the repo is published.
 
 ### Codex
 
 Tell Codex:
 
 ```text
-Fetch and follow instructions from https://raw.githubusercontent.com/dannnney/testability/refs/heads/main/.codex/INSTALL.md
+Fetch and follow instructions from https://raw.githubusercontent.com/dannnney/echo-tdd/refs/heads/main/.codex/INSTALL.md
 ```
 
 Detailed docs: `docs/README.codex.md`
@@ -44,7 +31,7 @@ Add Echo-TDD to the `plugin` array in `opencode.json`:
 
 ```json
 {
-  "plugin": ["echo-tdd@git+https://github.com/dannnney/testability.git"]
+  "plugin": ["echo-tdd@git+https://github.com/dannnney/echo-tdd.git"]
 }
 ```
 
@@ -53,37 +40,20 @@ Detailed docs: `docs/README.opencode.md`
 ### Gemini CLI
 
 ```bash
-gemini extensions install https://github.com/dannnney/testability
+gemini extensions install https://github.com/dannnney/echo-tdd
 ```
 
-## Local Development
+### Cursor
 
-### Claude Code local plugin testing
-
-```bash
-claude --plugin-dir /absolute/path/to/testability
-```
-
-Then run `/reload-plugins` after edits.
-
-### Claude Code local marketplace testing
-
-```text
-/plugin marketplace add .
-/plugin install echo-tdd@echo-tdd-marketplace --scope local
-```
+This repository includes a `.cursor-plugin/plugin.json` manifest. Install it through Cursor's plugin workflow.
 
 ## What's Inside
 
-- `skills/echo-tdd-plan/`
-- `skills/echo-tdd-verify/`
-- `skills/echo-tdd-generate/`
-- `commands/echo-tdd-plan.md`
-- `commands/echo-tdd-verify.md`
-- `commands/echo-tdd-generate.md`
-- `.claude-plugin/`
-- `.cursor-plugin/`
-- `.codex/`
-- `.opencode/`
-- `.agents/plugins/marketplace.json`
-- `plugins/echo-tdd/`
+- `skills/echo-tdd-plan/` — Phase 0-5 interactive workflow for observability plan generation
+- `skills/echo-tdd-verify/` — environment probing and scaffold generation
+- `skills/echo-tdd-generate/` — test case and data blueprint generation
+- `.claude-plugin/` — Claude Code plugin manifest
+- `.cursor-plugin/` — Cursor plugin manifest
+- `.codex/` — Codex installation guide
+- `.opencode/` — OpenCode plugin module
+- `plugins/echo-tdd/` — Codex packaged plugin
