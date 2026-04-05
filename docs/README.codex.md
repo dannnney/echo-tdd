@@ -7,7 +7,7 @@ Guide for using Echo-TDD with OpenAI Codex via native skill discovery.
 Tell Codex:
 
 ```text
-Fetch and follow instructions from https://raw.githubusercontent.com/dannnney/testability/refs/heads/main/.codex/INSTALL.md
+Fetch and follow instructions from https://raw.githubusercontent.com/dannnney/echo-tdd/refs/heads/main/.codex/INSTALL.md
 ```
 
 ## Manual Installation
@@ -21,7 +21,7 @@ Fetch and follow instructions from https://raw.githubusercontent.com/dannnney/te
 
 1. Clone the repo:
    ```bash
-   git clone https://github.com/dannnney/testability.git ~/.codex/echo-tdd
+   git clone https://github.com/dannnney/echo-tdd.git ~/.codex/echo-tdd
    ```
 
 2. Create the skills symlink:

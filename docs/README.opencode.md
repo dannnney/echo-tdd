@@ -8,7 +8,7 @@ Add Echo-TDD to the `plugin` array in your `opencode.json`:
 
 ```json
 {
-  "plugin": ["echo-tdd@git+https://github.com/dannnney/testability.git"]
+  "plugin": ["echo-tdd@git+https://github.com/dannnney/echo-tdd.git"]
 }
 ```
 

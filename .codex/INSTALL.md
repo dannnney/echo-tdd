@@ -10,7 +10,7 @@ Enable Echo-TDD skills in Codex via native skill discovery. Clone the repository
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/dannnney/testability.git ~/.codex/echo-tdd
+   git clone https://github.com/dannnney/echo-tdd.git ~/.codex/echo-tdd
    ```
 
 2. **Create the skills symlink:**

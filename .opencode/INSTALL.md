@@ -10,7 +10,7 @@ Add Echo-TDD to the `plugin` array in your `opencode.json` (global or project-le
 
 ```json
 {
-  "plugin": ["echo-tdd@git+https://github.com/dannnney/testability.git"]
+  "plugin": ["echo-tdd@git+https://github.com/dannnney/echo-tdd.git"]
 }
 ```
 
@@ -33,6 +33,6 @@ To pin a specific version:
 
 ```json
 {
-  "plugin": ["echo-tdd@git+https://github.com/dannnney/testability.git#v1.0.0"]
+  "plugin": ["echo-tdd@git+https://github.com/dannnney/echo-tdd.git#v1.0.0"]
 }
 ```
