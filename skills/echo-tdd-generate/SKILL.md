@@ -72,17 +72,38 @@ digraph cases {
 
 读取前两阶段的产出，提取用例生成所需的关键信息。
 
+### 路径格式支持
+
+支持新旧两种路径格式，与 verify 阶段一致：
+
+**新格式（优先）**：
+- 可观测性方案主文档：`docs/echo-tdd/plans/YYYY-MM-DD-<topic>-plan.md`
+- 可观测性详情：`docs/echo-tdd/plans/YYYY-MM-DD-<topic>-observability.md`
+- 验证报告：`docs/echo-tdd/verify/YYYY-MM-DD-<topic>-verify.md`
+
+**旧格式（兼容）**：
+- 可观测性方案：`docs/echo-tdd/<topic>/plan.md`（单文件，包含所有内容）
+- 验证报告：`docs/echo-tdd/<topic>/verify.md`
+
+**用户触发示例**：
+```
+/echo-tdd:generate @docs/echo-tdd/verify/2026-04-05-fz-feishu-sync-verify.md
+```
+
+系统会自动查找对应的 plan 和 observability 文档（从 verify 报告中提取路径或根据 topic 推断）。
+
 ### 必须提取的内容
 
-| 来源 | 提取什么 | 用途 |
-|------|---------|------|
-| 方案文档 第 1 节 | 测试范围和排除项 | 确定用例边界——哪些功能需要用例，哪些明确排除 |
-| 方案文档 第 3 节 | 测试分层结构 | 决定用例按哪些层组织（如：认证→只读→写操作→端到端） |
-| 方案文档 第 3 节 | 可观测性方案（触发×观测组合） | **决定每个用例的触发方式和验收方式** |
-| 方案文档 第 4 节 | 数据流闭环 | 决定数据蓝图的结构（准备→送入→验证→清理） |
-| 方案文档 第 5 节 | 认证方案 | 认证相关用例 + 数据准备的认证前提 |
-| 探测报告 | 各通道的 PASS/FAIL/WARN | **决定哪些通道实际可用，用例必须适配** |
-| 脚手架代码 | data-factory、client 的接口 | 数据蓝图中引用已有的工厂函数名 |
+| 来源 | 新格式 | 旧格式 | 提取什么 | 用途 |
+|------|--------|--------|---------|------|
+| 测试范围 | plan.md 第 1 节 | plan.md 第 1 节 | 测试范围和排除项 | 确定用例边界 |
+| 测试分层 | plan.md 第 5 节 | plan.md 第 5 节 | 测试分层结构 | 决定用例按哪些层组织 |
+| 触发×观测组合 | observability.md | plan.md 第 3 节 | 完整的触发×观测矩阵 | **决定每个用例的触发和验收方式** |
+| 约束与局限 | observability.md | plan.md 第 3 节 | 约束和降级方案 | 决定降级策略 |
+| 数据流闭环 | plan.md 第 4 节 | plan.md 第 4 节 | 数据准备、验证、清理方式 | 决定数据蓝图结构 |
+| 认证方案 | plan.md 第 6 节 | plan.md 第 6 节 | 认证方式 | 认证相关用例设计 |
+| 探测结果 | verify.md | verify.md | 各通道的 PASS/FAIL/WARN | **决定实际可用通道** |
+| 脚手架代码 | verify.md 或实际代码 | verify.md 或实际代码 | data-factory、client 接口 | 数据蓝图引用 |
 
 ### 环境适配逻辑
 
@@ -362,7 +383,15 @@ API 可用：
 
 ### 输出
 
-用户确认后，将用例文档和数据蓝图保存为 markdown 文件。位置由用户决定（默认 `docs/test-cases.md`）。
+用户确认后，将用例文档和数据蓝图保存到 `docs/echo-tdd/generate/YYYY-MM-DD-<topic>-generate.md`。
+
+- 其中 `YYYY-MM-DD` 为生成当天日期
+- `<topic>` 从输入的 verify 文档名称中提取
+
+**示例**：
+```
+测试用例文档已保存：docs/echo-tdd/generate/2026-04-05-fz-feishu-sync-generate.md
+```
 
 ---
 
